@@ -190,21 +190,24 @@ Use `set-region-read-only' to set this property."
 
 (use-package ivy
   :ensure t
+  :demand
   :diminish ivy-mode
   :bind
-  (("C-c C-r" . ivy-resume)
-   ("C-x B" . ivy-switch-buffer-other-window))
+  ;;  ("C-c C-r" . ivy-resume)
+  ("C-x B" . ivy-switch-buffer-other-window)
   :custom
   (ivy-use-virtual-buffers t)
-  ;; enable-recursive-minibuffers t
   (ivy-initial-inputs-alist nil)
-  (ivy-re-builders-alist
-   '((read-file-name-internal . ivy--regex-fuzzy)
-     (ivy-switch-buffer . ivy--regex-fuzzy)
-     (counsel-M-x . ivy--regex-fuzzy)
-     (t . ivy--regex-plus)))
+  (ivy-count-format "%d/%d ")
+     ;; (read-file-name-internal . ivy--regex-fuzzy)
+     ;; (ivy-switch-buffer . ivy--regex-fuzzy)
+     ;; (counsel-M-x . ivy--regex-fuzzy)
   :config
-  (ivy-mode))
+  (setq ivy-re-builders-alist
+   '((swiper . ivy--regex-plus)
+     (t . ivy--regex-fuzzy)))
+  (ivy-mode t)
+  )
 
 ;; (use-package ivy-rich
 ;;   :ensure t
@@ -221,7 +224,6 @@ Use `set-region-read-only' to set this property."
 (use-package flx
   :ensure t
   :after ivy)
-
 
 (use-package counsel
   :ensure t
@@ -284,6 +286,10 @@ Use `set-region-read-only' to set this property."
      aw-scope 'frame
      aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
   )
+
+(add-hook 'term-mode-hook
+  (lambda ()
+    (define-key term-raw-map (kbd "M-o") 'ace-window)))
 
 (use-package expand-region
     :ensure t
@@ -409,6 +415,7 @@ Use `set-region-read-only' to set this property."
 
 (use-package magit
   :ensure t
+  :defer 3
   :bind (("C-x g" . magit-status))
   )
 
@@ -425,6 +432,17 @@ Use `set-region-read-only' to set this property."
 (use-package highlight-indent-guides
   :diminish
   :ensure t)
+
+(use-package highlight-symbol :ensure t
+  :config
+  (set-face-attribute 'highlight-symbol-face nil
+                      :background "default"
+                      :foreground "#FA009A")
+  (setq highlight-symbol-idle-delay 0)
+  (setq highlight-symbol-on-navigation-p t)
+  (add-hook 'prog-mode-hook #'highlight-symbol-mode)
+  (add-hook 'prog-mode-hook #'highlight-symbol-nav-mode))
+
 
 ;; ;; Debugger
 ;; (use-package realgud
@@ -484,7 +502,6 @@ Use `set-region-read-only' to set this property."
   ;;     1 font-lock-constant-face)))
   ;; add hook to lang mode to enable the repl mode
   (defun do.julia.repl/mode-hooks ()
-    (highlight-symbol-mode)
     (julia-repl-mode)
     ;;(julia-img-view-minor-mode)
     )
@@ -523,6 +540,8 @@ Use `set-region-read-only' to set this property."
 ;;   :load-path "~/Dropbox/code/julia-img-view"
 ;;   :after julia-repl
 ;;   :config (julia-img-view-setup))
+
+
 
 (provide 'init)
 ;;; init.el ends here
