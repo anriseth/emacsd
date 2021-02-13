@@ -1,10 +1,14 @@
-;;; Code:
-
 ;;;;;;;;;;;;;;;;
 ;; Emacs core ;;
 ;;;;;;;;;;;;;;;;
 (global-set-key (kbd "C-x C-m") 'execute-extended-command)
 (global-set-key (kbd "C-M-h") 'backward-kill-word)
+(global-set-key (kbd "C-x C-r") 'replace-string)
+(define-prefix-command 'comment)
+(global-set-key (kbd "M-m") 'comment)
+(global-set-key (kbd "M-m M-c") 'comment-region)
+(global-set-key (kbd "M-m M-u M-c") 'comment-region)
+
 
 (menu-bar-mode -1)
 (tool-bar-mode -1)
@@ -23,14 +27,14 @@
 ;; See if garbage collection is causing a slowdown
 ;; by removing it in minibuffers
 ;; http://bling.github.io/blog/2016/01/18/why-are-you-changing-gc-cons-threshold/
-(defun my-minibuffer-setup-hook ()
-  (setq gc-cons-threshold most-positive-fixnum))
+;; (defun my-minibuffer-setup-hook ()
+;;   (setq gc-cons-threshold most-positive-fixnum))
 
-(defun my-minibuffer-exit-hook ()
-  (setq gc-cons-threshold 800000))
+;; (defun my-minibuffer-exit-hook ()
+;;   (setq gc-cons-threshold 800000))
 
-(add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
-(add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
+;; (add-hook 'minibuffer-setup-hook #'my-minibuffer-setup-hook)
+;; (add-hook 'minibuffer-exit-hook #'my-minibuffer-exit-hook)
 
 ;; New auto-save stuff for Emacs 26.1
 (auto-save-mode 0)
@@ -47,13 +51,13 @@
 
 ;; whitespace mode
 (require 'whitespace)
-(setq whitespace-line-column 80)
+(setq whitespace-line-column 120)
 (setq whitespace-style '(face tabs empty trailing lines-tail))
 
 (add-hook 'text-mode-hook (lambda() (whitespace-mode t)))
 (add-hook 'prog-mode-hook (lambda() (whitespace-mode t)))
 
-;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
 ;; (add-hook 'todo-mode
 ;;        (lambda () (remove-hook 'before-save-hook 'delete-trailing-whitespace)))
 
@@ -78,6 +82,7 @@
 
 ;; Activate occur easily inside isearch
 (define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
+
 
 (defun toggle-maximize-buffer () "Maximize buffer"
   (interactive)
@@ -145,98 +150,111 @@ Use `set-region-read-only' to set this property."
   :ensure t
   :bind (("C-a" . crux-move-beginning-of-line)))
 
-(use-package ido-completing-read+
-  :ensure t
-  :after ido
-  :config
-  (ido-everywhere t)
-  (ido-ubiquitous-mode t))
-
-(use-package flx-ido
-  :ensure t
-  :after ido)
-
-(use-package ido
-  :ensure t
-  :custom
-  (ido-enable-prefix nil)
-  (ido-enable-flex-matching t)
-  (ido-use-filename-at-point 'guess)
-  (ido-max-prospects 10)
-  ;; (ido-save-directory-list-file (expand-file-name "ido.hist" prelude-savefile-dir))
-  (ido-default-file-method 'selected-window)
-  (ido-use-faces nil) ;; disable ido faces to see flx highlights
-  :init
-  (ido-mode t)
-  :config
-  (flx-ido-mode t)  ;; smarter fuzzy matching for ido
-  )
-
-(use-package smex
-  :ensure t
-  :bind
-  ("M-x" . smex)
-  ("C-x C-m" . smex)
-  ("M-X" . smex-major-mode-commands)
-  :config
-  (smex-initialize)
-  )
-
-
-;; (use-package flx
+;; (use-package ido-completing-read+
 ;;   :ensure t
-;;   :after ivy)
+;;   :after ido
+;;   :config
+;;   (ido-everywhere t)
+;;   (ido-ubiquitous-mode t))
 
-;; (use-package ivy
+;; (use-package flx-ido
 ;;   :ensure t
-;;   :diminish ivy-mode
-;;   :bind
-;;   (("C-c C-r" . ivy-resume)
-;;    ("C-x B" . ivy-switch-buffer-other-window))
+;;   :after ido)
+
+;; (use-package ido
+;;   :ensure t
 ;;   :custom
-;;   (ivy-use-virtual-buffers t)
-;;   ;; enable-recursive-minibuffers t
-;;   (ivy-initial-inputs-alist nil)
-;;   (ivy-re-builders-alist
-;;    '((read-file-name-internal . ivy--regex-fuzzy)
-;;      (ivy-switch-buffer . ivy--regex-fuzzy)
-;;      (counsel-M-x . ivy--regex-fuzzy)
-;;      (t . ivy--regex-plus)))
-;;   :config
-;;   (ivy-mode))
-
-;; (use-package counsel
-;;   :ensure t
-;;   :after ivy
-;;   :diminish t
+;;   (ido-enable-prefix nil)
+;;   (ido-enable-flex-matching t)
+;;   (ido-use-filename-at-point 'guess)
+;;   (ido-max-prospects 10)
+;;   ;; (ido-save-directory-list-file (expand-file-name "ido.hist" prelude-savefile-dir))
+;;   (ido-default-file-method 'selected-window)
+;;   (ido-use-faces nil) ;; disable ido faces to see flx highlights
 ;;   :init
-;;     (use-package smex :ensure t)
-;;   :bind*
-;;     (;("M-x" . counsel-M-x)
-;;      ("C-x C-m" . counsel-M-x)
-;;      ;("C-x C-f" . counsel-find-file)
-;;      )
+;;   (ido-mode t)
 ;;   :config
-;;     (counsel-mode))
+;;   (flx-ido-mode t)  ;; smarter fuzzy matching for ido
+;;   )
 
-;; (use-package swiper
+;; (use-package smex
+;;   :ensure t
+;;   :bind
+;;   ("M-x" . smex)
+;;   ("C-x C-m" . smex)
+;;   ("M-X" . smex-major-mode-commands)
+;;   :config
+;;   (smex-initialize)
+;;   )
+
+
+(use-package ivy
+  :ensure t
+  :diminish ivy-mode
+  :bind
+  (("C-c C-r" . ivy-resume)
+   ("C-x B" . ivy-switch-buffer-other-window))
+  :custom
+  (ivy-use-virtual-buffers t)
+  ;; enable-recursive-minibuffers t
+  (ivy-initial-inputs-alist nil)
+  (ivy-re-builders-alist
+   '((read-file-name-internal . ivy--regex-fuzzy)
+     (ivy-switch-buffer . ivy--regex-fuzzy)
+     (counsel-M-x . ivy--regex-fuzzy)
+     (t . ivy--regex-plus)))
+  :config
+  (ivy-mode))
+
+;; (use-package ivy-rich
 ;;   :ensure t
 ;;   :after ivy
-;;   :bind (("C-s" . swiper)))
-
-;; (use-package counsel-projectile
-;;   :ensure t
-;;   :after projectile
-;;   :diminish t
+;;   :custom
+;;   (ivy-virtual-abbreviate 'full
+;;                           ivy-rich-switch-buffer-align-virtual-buffer t
+;;                           ivy-rich-path-style 'abbrev)
 ;;   :config
-;;   (add-hook 'after-init-hook 'counsel-projectile-mode))
+;;   (ivy-set-display-transformer 'ivy-switch-buffer
+;;                                'ivy-rich-switch-buffer-transformer))
+
+
+(use-package flx
+  :ensure t
+  :after ivy)
+
+
+(use-package counsel
+  :ensure t
+  :after ivy
+  :diminish t
+  :init
+    (use-package smex :ensure t)
+  :bind*
+    (;("M-x" . counsel-M-x)
+     ("C-x C-m" . counsel-M-x)
+     ("C-x C-f" . counsel-find-file)
+     )
+  :config
+    (counsel-mode))
+
+(use-package swiper
+  :ensure t
+  :after ivy
+  :bind (("C-s" . swiper)))
+
+(use-package counsel-projectile
+  :ensure t
+  :after projectile
+  :diminish t
+  :config
+  (add-hook 'after-init-hook 'counsel-projectile-mode))
 
 (use-package projectile
   :ensure t
-  ;; :after ivy
+  :after ivy
   ;; :after ido
   :config
-  ;(setq projectile-completion-system 'ivy)
+  (setq projectile-completion-system 'ivy)
   (projectile-mode t)
   )
 
@@ -301,7 +319,9 @@ Use `set-region-read-only' to set this property."
   :init
   (progn
     (add-hook 'prog-mode-hook 'turn-on-smartparens-mode)
-    (add-hook 'markdown-mode-hook 'turn-on-smartparens-mode))
+    (add-hook 'markdown-mode-hook 'turn-on-smartparens-mode)
+    (smartparens-global-mode t) ;; This makes the two above reduntant
+    )
   :config
   (progn
     (show-smartparens-global-mode t)))
@@ -332,11 +352,11 @@ Use `set-region-read-only' to set this property."
             (bind-key "C-p" #'company-select-previous company-active-map))
   )
 
-(use-package flycheck
-  :ensure t
-  :diminish " ✓"
-  :init
-  (add-hook 'after-init-hook #'global-flycheck-mode))
+;; (use-package flycheck
+;;   :ensure t
+;;   :diminish " ✓"
+;;   :init
+;;   (add-hook 'after-init-hook #'global-flycheck-mode))
 
 (use-package tex-site
   :ensure auctex
@@ -410,87 +430,99 @@ Use `set-region-read-only' to set this property."
 ;; (use-package realgud
 ;;   :ensure t)
 
-(use-package python
+(use-package elpy
   :ensure t
-  :mode ("\\.py" . python-mode)
+  :defer t
   :init
-  (add-hook 'python-mode-hook 'rainbow-delimiters-mode)
-  (add-hook 'python-mode-hook 'turn-on-smartparens-mode)
-  (add-hook 'inferior-python-mode-hook 'turn-on-smartparens-mode)
-  (require 'smartparens-python)
-  :custom
-  (python-shell-interpreter "jupyter")
-  (python-shell-interpreter-args "console --simple-prompt")
+  (advice-add 'python-mode :before 'elpy-enable)  ;; python-mode enables the virtual environment we start emacs with
+  (setq elpy-rpc-virtualenv-path 'current) ;; default is 'system, which ends up setting up a python2 environment ...
   :config
-  (add-to-list 'python-shell-completion-native-disabled-interpreters
-               "jupyter")
+  (setq company-idle-delay 1)  ;; Elpy resets this to zero, do not want.
+  )
+
+
+(use-package python
+  :custom
+  (python-shell-interpreter "ipython")
+  (python-shell-interpreter-args "--simple-prompt")
+  (set-fill-column 120)
+  :config
   (add-to-list 'load-path "~/.emacs.d/python/")
   (require 'python-smart-execute)
   (require 'python-extensions)
   (define-key inferior-python-mode-map (kbd "<up>") 'comint-previous-matching-input-from-input)
   (define-key inferior-python-mode-map (kbd "<down>") 'comint-next-matching-input-from-input)
+  (add-hook 'python-mode-hook
+            (lambda ()
+              ;; Remove python-mode's ffap things that slow down find-file
+              (setq ffap-alist (remove '(python-mode . python-ffap-module-path) ffap-alist))
+              )
+            )
+  (add-hook 'inferior-python-mode-hook
+            (lambda ()
+              (anzu-mode -1)  ;; anzu-mode kills performance in large buffers
+              ;; Remove python-mode's ffap things that slow down find-file
+              (setq ffap-alist (remove '(inferior-python-mode . python-ffap-module-path) ffap-alist))
+              ;; Try to disable colour parsing in comint-mode (super slow)
+              (setq ansi-color-for-comint-mode 'filter)
+              (setq shell-font-lock-keywords nil)
+              ;; (setq -p-escape-quotes-after-insert nil)
+              (setq sp-escape-wrapped-region nil)
+              )
+            )
   )
 
 
-;; (use-package python
-;;   :ensure t
-;;   :mode ("\\.py" . python-mode)
-;;   :init
-;;   (add-hook 'python-mode-hook 'rainbow-delimiters-mode)
-;;   (add-hook 'python-mode-hook 'turn-on-smartparens-mode)
-;;   (add-hook 'inferior-python-mode 'turn-on-smartparens-mode)
-;;   (require 'smartparens-python)
-;;   ;;(python-shell-font-lock-turn-off)
-;;   (use-package elpy
-;;     :ensure t
-;;     :commands elpy-enable
-;;     :config
-;;     (setq ;; elpy-rpc-python-command "python2"
-;;        ;; elpy-modules (dolist (elem '(elpy-module-highlight-indentation
-;;        ;;                           elpy-module-yasnippet))
-;;        ;;             (remove elem elpy-modules))
-;;        ;python-shell-interpreter "ipython"
-;;        ;python-shell-interpreter-args "-i --simple-prompt"
-;;           python-shell-interpreter "jupyter"
-;;        python-shell-interpreter-args "console --simple-prompt"
-;;        python-shell-prompt-detect-failure-warning nil
-;;        elpy-company-add-completion-from-shell t
-;;        elpy-shell-use-project-root nil
-;;        ))
-;;     (add-to-list 'python-shell-completion-native-disabled-interpreters
-;;               "jupyter")
+(use-package julia-mode
+  :ensure t
+  :config
+  ;; (setq julia-indent-offset 4)
+  ;; add some extra highlighting
+  ;; (font-lock-add-keywords
+  ;;  'julia-mode
+  ;;  '(("\\<\\(pi\\|π\\|im\\|^>>\\)\\>"
+  ;;     1 font-lock-constant-face)))
+  ;; add hook to lang mode to enable the repl mode
+  (defun do.julia.repl/mode-hooks ()
+    (highlight-symbol-mode)
+    (julia-repl-mode)
+    ;;(julia-img-view-minor-mode)
+    )
+  (add-hook 'julia-mode-hook 'do.julia.repl/mode-hooks))
 
-;;     (elpy-enable)
+(use-package julia-repl
+  :after julia-mode
+  :ensure t
+  :commands (julia-repl julia-repl--executable-record)
+  :init
+  ;; add some generic hooks for the repl mode
+  (defun do.julia.repl/hooks ()
+    (setq global-hl-line-mode nil)
+    (setq show-trailing-whitespace nil))
+  (add-hook 'julia-repl-hook #'do.julia.repl/hooks)
+  ;; start julia with `run-julia'
+  ;; (defun run-julia (arg)
+  ;;   "Run the julia REPL. When called with a prefix argument ARG,
+  ;; run it with ARG threads. If C-u was typed, but no prefix
+  ;; argument given, run with $(nproc) threads."
+  ;;   (interactive "P")
+  ;;   (let ((nthreads (cond ((and (listp arg) (equal (length arg) 1))
+  ;;                          (string-to-number (car (split-string (shell-command-to-string "nproc") "\n"))))
+  ;;                         ((numberp arg) arg)
+  ;;                         (t 1)))
+  ;;         (envvar "JULIA_NUM_THREADS"))
+  ;;     (if (equal nthreads 1)
+  ;;         (julia-repl)
+  ;;       (setenv envvar (number-to-string nthreads))
+  ;;       (julia-repl)
+  ;;       (setenv envvar nil))))
+  )
 
-;;     (add-to-list 'load-path "~/.emacs.d/python/")
-;;     (require 'python-smart-execute)
-;;     (require 'python-extensions)
-
-;;   (define-key inferior-python-mode-map (kbd "<up>") 'comint-previous-matching-input-from-input)
-;;   (define-key inferior-python-mode-map (kbd "<down>") 'comint-next-matching-input-from-input))
-
-
-;; ;; Emacs slows down a lot whenever Inferior Python hits an error and prints the trace
-;; ;; I think it may be due to font-lock, so let's see if this helps
-;; ;; See https://github.com/jorgenschaefer/elpy/wiki/Customizations#enable-full-font-locking-of-inputs-in-the-python-shell
-;; (advice-add 'elpy-shell--insert-and-font-lock
-;;             :around (lambda (f string face &optional no-font-lock)
-;;                       (if (not (eq face 'comint-highlight-input))
-;;                           (funcall f string face no-font-lock)
-;;                         (funcall f string face t)
-;;                         (python-shell-font-lock-post-command-hook))))
-
-;; (advice-add 'comint-send-input
-;;             :around (lambda (f &rest args)
-;;                       (if (eq major-mode 'inferior-python-mode)
-;;                           (cl-letf ((g (symbol-function 'add-text-properties))
-;;                                     ((symbol-function 'add-text-properties)
-;;                                      (lambda (start end properties &optional object)
-;;                                        (unless (eq (nth 3 properties) 'comint-highlight-input)
-;;                                          (funcall g start end properties object)))))
-;;                             (apply f args))
-;;                         (apply f args))))
-
+;; use-package for julia-img-view
+;; (use-package julia-img-view
+;;   :load-path "~/Dropbox/code/julia-img-view"
+;;   :after julia-repl
+;;   :config (julia-img-view-setup))
 
 (provide 'init)
 ;;; init.el ends here
